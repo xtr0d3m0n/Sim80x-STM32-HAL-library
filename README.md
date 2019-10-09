@@ -1,7 +1,7 @@
 # Sim80x-STM32-HAL-library
 STM32 HAL based library for SIM80x devices.
 This Library is heavily based on this https://github.com/nimaltd/Sim800_V2
-All credit goes to the original authur
+All credit goes to the original author.
 
 Use Keil MDK and CubeMX To generate the base code with RTOS enabled.
 1) Enable FreeRTOS.
