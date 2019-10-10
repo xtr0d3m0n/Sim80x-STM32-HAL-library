@@ -15,6 +15,9 @@
 //######################################################################################################################
 //######################################################################################################################
 extern Sim80x_t         Sim80x;
+#define BUFFER_SIZE 64
+extern char replyBuffer[BUFFER_SIZE];
+#define min(X, Y) (((X) > (Y)) ? (X) : (Y));
 //######################################################################################################################
 //######################################################################################################################
 //######################################################################################################################
@@ -105,21 +108,22 @@ bool                    GPRS_HttpGet(char *URL);
 //######################################################################################################################
 bool GPS_PowerOnOff(bool power);
 bool GPS_GetPowerState(bool *state);
-GPSStatus_t GPS_GetStatus();
-void GPS_GetField(const char* response, SIM808GpsField field, char** result);
-bool GPS_GetField(const char* response, SIM808GpsField field, uint16_t* result);
-bool GPS_GetField(const char* response, SIM808GpsField field, float* result);
+GPSStatus_t GPS_GetStatus(char * response, size_t responseSize, uint8_t minSatellitesForAccurateFix);
+void GPS_GetField_char(const char* response, GPSField_t field, char** result);
+bool GPS_GetField_uint16(const char* response, GPSField_t field, uint16_t* result);
+bool GPS_GetField_float(const char* response, GPSField_t field, float* result);
 //######################################################################################################################
+size_t readNext(char * buffer, size_t size, uint16_t * timeout, char stop);
 size_t copyCurrentLine(char *dst, size_t dstSize, uint16_t shift);
 size_t safeCopy(const char *src, char *dst, size_t dstSize);
 char* find(const char* str, char divider, uint8_t index);
-bool parse(const char* str, char divider, uint8_t index, uint8_t* result);
-bool parse(const char* str, char divider, uint8_t index, int8_t* result);
-bool parse(const char* str, char divider, uint8_t index, uint16_t* result);
+bool parse_uint8(const char* str, char divider, uint8_t index, uint8_t* result);
+bool parse_int8(const char* str, char divider, uint8_t index, int8_t* result);
+bool parse_uint16(const char* str, char divider, uint8_t index, uint16_t* result);
 #if defined(NEED_SIZE_T_OVERLOADS)
-bool parse(const char* str, char divider, uint8_t index, size_t* result);
+bool parse_size(const char* str, char divider, uint8_t index, size_t* result);
 #endif
-bool parse(const char* str, char divider, uint8_t index, int16_t* result);
-bool parse(const char* str, char divider, uint8_t index, float* result);
+bool parse_int16(const char* str, char divider, uint8_t index, int16_t* result);
+bool parse_float(const char* str, char divider, uint8_t index, float* result);
 //######################################################################################################################
 #endif

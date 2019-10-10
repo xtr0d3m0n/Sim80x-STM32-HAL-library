@@ -1,31 +1,34 @@
 #include "Sim80x.h"
 
-/*int8_t waitResponse(uint16_t timeout, 
-	ATConstStr s1, 
-	ATConstStr s2,
-	ATConstStr s3,
-	ATConstStr s4)
+char replyBuffer[BUFFER_SIZE];
+size_t readNext(char * buffer, size_t size, uint16_t * timeout, char stop)
 {
-	ATConstStr wantedTokens[4] = { s1, s2, s3, s4 };
-	size_t length;
+	size_t i = 0;
+	bool exit = false;
 
 	do {
-		memset(replyBuffer, 0, BUFFER_SIZE);
-		length = readNext(replyBuffer, BUFFER_SIZE, &timeout, '\n');
+		while(!exit && i < size - 1 && available()) {
+			char c = read();
+			buffer[i] = c;
+			i++;
 
-		if(!length) continue; 					//read nothing
-		if(wantedTokens[0] == NULL) return 0;	//looking for a line with any content
-
-		for(uint8_t i = 0; i < 4; i++) {
-			if(wantedTokens[i]) {
-				char *p = strstr_P(replyBuffer, TO_P(wantedTokens[i]));
-				if(replyBuffer == p) return i;				
-			}
+			exit |= stop && c == stop;
 		}
-	} while(timeout);
 
-	return -1;
-}*/
+		if(timeout) {			
+			if(*timeout) {
+				HAL_Delay(1);
+				(*timeout)--;
+			}
+
+			if(!(*timeout)) break;
+		}
+	} while(!exit && i < size - 1);
+
+	buffer[i] = '\0';
+
+	return i > 0 ? i - 1 : i;
+}
 
 size_t copyCurrentLine(char *dst, size_t dstSize, uint16_t shift)
 {
@@ -71,26 +74,26 @@ char* find(const char* str, char divider, uint8_t index)
 	return p;
 }
 
-bool parse(const char* str, char divider, uint8_t index, uint8_t* result)
+bool parse_uint8(const char* str, char divider, uint8_t index, uint8_t* result)
 {
 	uint16_t tmpResult;
-	if (!parse(str, divider, index, &tmpResult)) return false;
+	if (!parse_uint16(str, divider, index, &tmpResult)) return false;
 
 	*result = (uint8_t)tmpResult;
 	return true;
 }
 
 
-bool parse(const char* str, char divider, uint8_t index, int8_t* result)
+bool parse_int8(const char* str, char divider, uint8_t index, int8_t* result)
 {
 	int16_t tmpResult;
-	if (!parse(str, divider, index, &tmpResult)) return false;
+	if (!parse_int16(str, divider, index, &tmpResult)) return false;
 
 	*result = (int8_t)tmpResult;
 	return true;
 }
 
-bool parse(const char* str, char divider, uint8_t index, uint16_t* result)
+bool parse_uint16(const char* str, char divider, uint8_t index, uint16_t* result)
 {
 	char* p = find(str, divider, index);
 	if (p == NULL) return false;
@@ -102,7 +105,7 @@ bool parse(const char* str, char divider, uint8_t index, uint16_t* result)
 }
 
 #if defined(NEED_SIZE_T_OVERLOADS)
-bool parse(const char* str, char divider, uint8_t index, size_t* result) 
+bool parse_size(const char* str, char divider, uint8_t index, size_t* result) 
 { 
 	char* p = find(str, divider, index);
 	if (p == NULL) return false;
@@ -114,7 +117,7 @@ bool parse(const char* str, char divider, uint8_t index, size_t* result)
 }
 #endif
 
-bool parse(const char* str, char divider, uint8_t index, int16_t* result)
+bool parse_int16(const char* str, char divider, uint8_t index, int16_t* result)
 {	
 	char* p = find(str, divider, index);
 	if (p == NULL) return false;
@@ -125,7 +128,7 @@ bool parse(const char* str, char divider, uint8_t index, int16_t* result)
 	return errno == 0;
 }
 
-bool parse(const char* str, char divider, uint8_t index, float* result)
+bool parse_float(const char* str, char divider, uint8_t index, float* result)
 {
 	char* p = find(str, divider, index);
 	if (p == NULL) return false;

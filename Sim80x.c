@@ -90,7 +90,7 @@ uint8_t     Sim80x_SendAtCommand(char *AtCommand,int32_t  MaxWaiting_ms,uint8_t 
       return Sim80x.AtCommand.FindAnswer;    
     MaxWaiting_ms-=10;
   }
-  strncpy(replyBuffer,Sim80x.AtCommand.ReceiveAnswer,sizeof(Sim80x.AtCommand.SendCommand));
+  strncpy(replyBuffer,(const char *)Sim80x.AtCommand.ReceiveAnswer,sizeof(Sim80x.AtCommand.SendCommand));
   memset(Sim80x.AtCommand.ReceiveAnswer,0,sizeof(Sim80x.AtCommand.ReceiveAnswer));
   Sim80x.Status.Busy=0;
   return Sim80x.AtCommand.FindAnswer;
@@ -597,9 +597,9 @@ void	Sim80x_Init(osPriority Priority)
 //######################################################################################################################
 void  Sim80x_BufferProcess(void)
 {
-  char      *strStart,*str1,*str2,*str3;
+  char      *strStart,*str1,*str2;//*str3;
   int32_t   tmp_int32_t;
-  char      tmp_str[16];
+  //char      tmp_str[16];
   
   strStart = (char*)&Sim80x.UsartRxBuffer[0];  
   //##################################################

@@ -6,7 +6,7 @@
 
 #define	_SIM80X_DEBUG				        0					
 
-#define	_SIM80X_USART				        huart1
+#define	_SIM80X_USART				        huart3
 
 #define	_SIM80X_USE_POWER_KEY   	  0
 
