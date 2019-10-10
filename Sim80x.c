@@ -90,6 +90,7 @@ uint8_t     Sim80x_SendAtCommand(char *AtCommand,int32_t  MaxWaiting_ms,uint8_t 
       return Sim80x.AtCommand.FindAnswer;    
     MaxWaiting_ms-=10;
   }
+  strncpy(replyBuffer,Sim80x.AtCommand.ReceiveAnswer,sizeof(Sim80x.AtCommand.SendCommand));
   memset(Sim80x.AtCommand.ReceiveAnswer,0,sizeof(Sim80x.AtCommand.ReceiveAnswer));
   Sim80x.Status.Busy=0;
   return Sim80x.AtCommand.FindAnswer;

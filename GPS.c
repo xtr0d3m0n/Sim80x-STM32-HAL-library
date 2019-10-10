@@ -7,35 +7,20 @@ bool GPS_PowerOnOff(bool power)
   bool current_state;
   if (!GPS_GetPowerState(&current_state) ||(current_state == power))
   {
-    return false;//consider sending answer for better runtime reliabiulity also convert to bool before sending
-  }
-  else
-  {
-    answer = Sim80x_SendAtCommand("AT+CGPSPWR=1\r\n",10000,2,"\r\nOK\r\n","\r\nERROR\r\n");
-    return true;
-  }
-
-
-}
-//####################################################################################################
-bool GPS_GetPowerState(bool *state)
-{
-  uint8_t answer;
-  answer = Sim80x_SendAtCommand("AT+CGPSPWR?\r\n",10000,2,"\r\nOK\r\n","\r\nERROR\r\n"); // Only returns OK???
-  if (answer == 1)
-  {
-    *state = answer;
-  }
-  else
-  {
     return false;
   }
-  return true;//consider sending answer for better runtime reliabiulity also convert to bool before sending
-}
-//####################################################################################################
-GPSStatus_t GPS_GetStatus()
-{
-  GPSStatus_t result = GPSStatus_t.NoFix;
+  else
+  {
+    answer = Sim80x_SendAtCommand("AT+CGPSPWR=%d\r\n",10000,2,"\r\nOK\r\n","\r\nERROR\r\n",(int)power);
+    if (answer == 1)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
 }
 //####################################################################################################
 void GPS_GetField(const char* response, SIM808GpsField field, char** result)
@@ -59,6 +44,58 @@ bool GPS_GetField(const char*response, GPSField_t field, float* result)
   }
   parse(response, ',', (uint8_t)field, result);
   return true;  
+}
+//####################################################################################################
+GPSStatus_t GPS_GetStatus(char * response, size_t responseSize, uint8_t minSatellitesForAccurateFix)
+{
+  GPSStatus_t result = GPSStatus_t.NoFix;
+  //at
+  if(waitResponse(TO_F(TOKEN_GPS_INFO)) != 0)
+  {
+    return GPSStatus_t.Fail;
+  }
+
+  uint16_t shift = strlen_P(TOKEN_GPS_INFO) + 2;
+
+  if(replyBuffer[shift] == '0')
+    {
+      result = GPSStatus_t.Off;
+    }
+  if(replyBuffer[shift + 2] == '1') // fix acquired
+    {
+      uint16_t satellitesUsed;
+      GPS_GetField(replyBuffer, GPSStatus_t.GnssUsed, &satellitesUsed);
+
+      result = satellitesUsed > minSatellitesForAccurateFix ?
+      GPSStatus_t.AccurateFix :
+      GPSStatus_t.Fix;
+      copyCurrentLine(response, responseSize, shift);
+    }
+
+  if(waitResponse() != 0) 
+    {
+      return GPSStatus_t.Fail;
+    }
+  return result;
+}
+//####################################################################################################
+bool GPS_GetPowerState(bool *state)
+{
+  uint8_t answer;
+  answer = Sim80x_SendAtCommand("AT+CGPSPWR?\r\n",10000,2,"+CGPSPWR: 0\r\n\r\nOK\r\n","+CGPSPWR: 1\r\n\r\nOK\r\n");
+  if (answer = 1)
+  {
+    *state = 0;
+  }
+  if (answer = 2)
+  {
+    *state = 1;
+  }
+  else
+  {
+    return false;
+  }
+  return true;
 }
 //####################################################################################################
 #endif
