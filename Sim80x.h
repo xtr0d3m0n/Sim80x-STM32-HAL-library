@@ -108,7 +108,8 @@ bool                    GPRS_HttpGet(char *URL);
 //######################################################################################################################
 bool GPS_PowerOnOff(bool power);
 bool GPS_GetPowerState(bool *state);
-GPSStatus_t GPS_GetStatus(char * response, size_t responseSize, uint8_t minSatellitesForAccurateFix);
+GPSStatus_t GPS_GetStatus(void);
+bool GPS_GetGPSInfo(float *GPSInfoArray);
 void GPS_GetField_char(const char* response, GPSField_t field, char** result);
 bool GPS_GetField_uint16(const char* response, GPSField_t field, uint16_t* result);
 bool GPS_GetField_float(const char* response, GPSField_t field, float* result);

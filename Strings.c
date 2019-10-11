@@ -1,14 +1,13 @@
 #include "Sim80x.h"
 
-char replyBuffer[BUFFER_SIZE];
 size_t readNext(char * buffer, size_t size, uint16_t * timeout, char stop)
 {
 	size_t i = 0;
 	bool exit = false;
 
 	do {
-		while(!exit && i < size - 1 && available()) {
-			char c = read();
+		while(!exit && i < size - 1/*available()*/) {
+			char c = replyBuffer[i];//read();
 			buffer[i] = c;
 			i++;
 

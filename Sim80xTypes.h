@@ -262,15 +262,14 @@ typedef enum
 //######################################################################################################################
 typedef enum
 {
-  Longitude = 2,
-  Latitude = 3,
-  Altitude = 4,
-  Utc = 5,
-  TTFF = 6,
-  GpsInView = 7,
-  Speed = 8,
-  Course = 9, 
-  //uint8_t GnssUsed = 10;s
+  Longitude = 1,
+  Latitude = 2,
+  Altitude = 3,
+  Utc = 4,
+  TTFF = 5,
+  SatsInView = 6,
+  Speed = 7,
+  Course = 8, 
 }GPSField_t;
 //######################################################################################################################
 typedef struct

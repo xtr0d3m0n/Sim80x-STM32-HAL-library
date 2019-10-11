@@ -7,6 +7,7 @@ osThreadId 		Sim80xTaskHandle;
 osThreadId 		Sim80xBuffTaskHandle;
 void 	        StartSim80xTask(void const * argument);
 void 	        StartSim80xBuffTask(void const * argument);
+char replyBuffer[BUFFER_SIZE];
 //######################################################################################################################
 //######################################################################################################################
 //######################################################################################################################
@@ -28,8 +29,8 @@ void	Sim80x_SendString(char *str)
 void  Sim80x_SendRaw(uint8_t *Data,uint16_t len)
 {
   HAL_UART_Receive_IT(&_SIM80X_USART,&Sim80x.UsartRxTemp,1);	
-  #if (_SIM80X_DMA_TRANSMIT==1)
-	while(_SIM80X_USART.hdmatx->State != HAL_DMA_STATE_READY)
+  #if (_SIM80X_DMA_TRANSMIT==1) 
+	while(_SIM80X_USART.hdmatx->State != HAL_DMA_STATE_READY)  
 		osDelay(10);
 	HAL_UART_Transmit_DMA(&_SIM80X_USART,Data,len);
 	while(_SIM80X_USART.hdmatx->State != HAL_DMA_STATE_READY)
@@ -83,7 +84,7 @@ uint8_t     Sim80x_SendAtCommand(char *AtCommand,int32_t  MaxWaiting_ms,uint8_t 
   va_end (tag);		  
   strncpy(Sim80x.AtCommand.SendCommand,AtCommand,sizeof(Sim80x.AtCommand.SendCommand));            
   Sim80x_SendString(Sim80x.AtCommand.SendCommand); 
-  while( MaxWaiting_ms > 0)
+  while( MaxWaiting_ms > 0) 
   {
     osDelay(10);
     if(Sim80x.AtCommand.FindAnswer > 0)
