@@ -1,41 +1,44 @@
 #include "Sim80x.h"
 #if (_SIM80X_USE_GPS==1)
 //####################################################################################################
-bool GPS_PowerOnOff(bool power)
+void GPS_PowerOnOff(bool power)
 {
-  uint8_t answer;
-  bool current_state;
-  if (!GPS_GetPowerState(&current_state) ||(current_state == power))
+  uint8_t answer = 0;
+  Sim80x.GPS = Off;
+  //GPS_GetPowerState(); 
+  if ((power == true) && (Sim80x.GPS == Off))
   {
-    return false;
-  }
-  else
-  {
-    if (power)
+    answer = Sim80x_SendAtCommand("AT+CGPSPWR=1\r\n",1000,2,"\r\r\nOK\r\n","\r\r\nERROR\r\n");
+    if (answer == 1)
     {
-    answer = Sim80x_SendAtCommand("AT+CGPSPWR=1\r\n",10000,2,"\r\nOK\r\n","\r\nERROR\r\n");
-      if (answer == 1)
-      {
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-      }
+      Sim80x.GPS = On;
+    }
     else
     {
-    answer = Sim80x_SendAtCommand("AT+CGPSPWR=0\r\n",10000,2,"\r\nOK\r\n","\r\nERROR\r\n");
-      if (answer == 1)
-      {
-        return true;
-      }
-      else
-      {
-        return false;
-      }
+      Sim80x.GPS = Err;
     }
   }
+  if ((power == true) && (Sim80x.GPS == On))
+  {
+    Sim80x.GPS = On;
+  }
+ 
+  if ((power == false) && (Sim80x.GPS == On))
+  {
+    answer = Sim80x_SendAtCommand("AT+CGPSPWR=0\r\n",1000,2,"\r\r\nOK\r\n","\r\r\nERROR\r\n");
+    if (answer == 1)
+    {
+      Sim80x.GPS = Off;
+    }
+    else
+    {
+      Sim80x.GPS = Err;
+    }
+  }
+  if ((power == false) && (Sim80x.GPS == Off))
+  {
+    Sim80x.GPS = Off;
+  } 
 }
 //####################################################################################################
 void GPS_GetField_char(const char* response, GPSField_t field, char** result)
@@ -61,85 +64,84 @@ bool GPS_GetField_float(const char*response, GPSField_t field, float* result)
   return true;  
 }
 //####################################################################################################
-GPSStatus_t GPS_GetStatus(void)
+void GPS_GetStatus(void)
 {	
   uint8_t answer = 0;
-	answer = Sim80x_SendAtCommand("AT+CGPSSTATUS?\r\n",10000,5,"Location Unknown\r\n\r\nOK\r\n",
-    "Location Not Fix\r\n\r\nOK\r\n","Location 2D Fix\r\n\r\nOK\r\n","Location 3D\r\n\r\nOK\r\n");
+	answer = Sim80x_SendAtCommand("AT+CGPSSTATUS?\r\n",10000,4,"Location Unknown\r\r\nOK\r\n",
+    "Location Not Fix\r\r\nOK\r\n","Location 2D Fix\r\r\nOK\r\n","Location 3D Fix\r\r\nOK\r\n");
     if (answer == 1)
     {
-      return Fail;
+    Sim80x.GPS = Fail;
     }
     if (answer == 2)
     {
-      return NoFix;
+    Sim80x.GPS = NoFix;
     }
     if (answer == 3)
     {
-      return Fix;
+    Sim80x.GPS = Fix;
     }
-    if (answer == 3)
+    if (answer == 4)
     {
-      return AccurateFix;
+    Sim80x.GPS = AccurateFix; 
     }
     else
     {
-      return Fail;
+    Sim80x.GPS = Fail;
     }
 }
 //####################################################################################################
-bool GPS_GetPowerState(bool *state)
+void GPS_GetPowerState()
 {
-  uint8_t answer;
-  answer = Sim80x_SendAtCommand("AT+CGPSPWR?\r\n",10000,2,"+CGPSPWR: 0\r\n\r\nOK\r\n","+CGPSPWR: 1\r\n\r\nOK\r\n");
+  uint8_t answer = 0;
+  //answer = Sim80x_SendAtCommand("AT+CGPSPWR?\r\n",1000,2,"\r\r\n+CGPSPWR:0\r\n\r\nOK\r\n","\r\r\n+CGPSPWR:1\r\n\r\nOK\r\n");
+  Sim80x_SendString("AT+CGPSPWR?\r\n");
   if (answer == 1)
   {
-    *state = 0;
+    Sim80x.GPS = Off;
   }
   if (answer == 2)
   {
-    *state = 1;
+    Sim80x.GPS = On;
   }
   else
   {
-    return false;
+    Sim80x.GPS = Fail;
   }
-  return true;
 }
 //####################################################################################################
 bool GPS_GetGPSInfo(float *GPSInfoArray)
 {
-  if (Sim80x_SendAtCommand("AT+CGPSINF=0\r\n",10000,2,"%f,%f,%f,%f,%f,%f,%f,%f,\r\n\r\nOK\r\n"))
-  {
-    if(GPS_GetField_float(replyBuffer,Longitude,&GPSInfoArray[0]))
+  Sim80x_SendString("AT+CGPSINF=0\r\n");
+    if(GPS_GetField_float((char *)Sim80x.UsartRxBuffer,Longitude,&GPSInfoArray[0]))
     {
       return true;
     }
-    if(GPS_GetField_float(replyBuffer,Latitude,&GPSInfoArray[1]))
+    if(GPS_GetField_float((char *)Sim80x.UsartRxBuffer,Latitude,&GPSInfoArray[1]))
     {
       return true;
     }
-    if(GPS_GetField_float(replyBuffer,Altitude,&GPSInfoArray[2]))
+    if(GPS_GetField_float((char *)Sim80x.UsartRxBuffer,Altitude,&GPSInfoArray[2]))
     {
       return true;
     }
-    if(GPS_GetField_float(replyBuffer,Utc,&GPSInfoArray[3]))
+    if(GPS_GetField_float((char *)Sim80x.UsartRxBuffer,Utc,&GPSInfoArray[3]))
     {
       return true;
     }
-    if(GPS_GetField_float(replyBuffer,TTFF,&GPSInfoArray[4]))
+    if(GPS_GetField_float((char *)Sim80x.UsartRxBuffer,TTFF,&GPSInfoArray[4]))
     {
       return true;
     }
-    if(GPS_GetField_float(replyBuffer,SatsInView,&GPSInfoArray[5]))
+    if(GPS_GetField_float((char *)Sim80x.UsartRxBuffer,SatsInView,&GPSInfoArray[5]))
     {
       return true;
     }
-    if(GPS_GetField_float(replyBuffer,Speed,&GPSInfoArray[6]))
+    if(GPS_GetField_float((char *)Sim80x.UsartRxBuffer,Speed,&GPSInfoArray[6]))
     {
       return true;
     }
-    if(GPS_GetField_float(replyBuffer,Course,&GPSInfoArray[7]))
+    if(GPS_GetField_float((char *)Sim80x.UsartRxBuffer,Course,&GPSInfoArray[7]))
     {
       return true;
     }
@@ -147,11 +149,6 @@ bool GPS_GetGPSInfo(float *GPSInfoArray)
     {
       return false;
     }
-  }
-  else
-  {
-    return false;
-  }
 }
 //####################################################################################################
 #endif

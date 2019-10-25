@@ -2,7 +2,6 @@
 #define	_SIM80X_H
 
 #include "usart.h"
-#include "Cmsis_OS.h"
 #include "Sim80xConfig.h"
 #include "Sim80xTypes.h"
 #include <stdbool.h>
@@ -15,8 +14,6 @@
 //######################################################################################################################
 //######################################################################################################################
 extern Sim80x_t         Sim80x;
-#define BUFFER_SIZE 64
-extern char replyBuffer[BUFFER_SIZE];
 #define min(X, Y) (((X) > (Y)) ? (X) : (Y));
 //######################################################################################################################
 //######################################################################################################################
@@ -26,8 +23,10 @@ void                    Sim80x_SendRaw(uint8_t *Data,uint16_t len);
 uint8_t                 Sim80x_SendAtCommand(char *AtCommand,int32_t  MaxWaiting_ms,uint8_t HowMuchAnswers,...);
 //######################################################################################################################
 void                    Sim80x_UserInit(void);
-void				            Sim80x_RxCallBack(void);
-void				            Sim80x_Init(osPriority Priority);
+void					Sim80x_RxCallBack(void);
+void					Sim80x_Init(void);
+void					Sim80x_BufferProcess(void);
+void					StartSim80xTask(void);
 void                    Sim80x_SaveParameters(void);
 void                    Sim80x_SetPower(bool TurnOn);
 void                    Sim80x_SetFactoryDefault(void);
@@ -106,9 +105,9 @@ bool                    GPRS_ConnectToNetwork(char *Name,char *username,char *pa
 bool                    GPRS_HttpGet(char *URL);
 
 //######################################################################################################################
-bool GPS_PowerOnOff(bool power);
-bool GPS_GetPowerState(bool *state);
-GPSStatus_t GPS_GetStatus(void);
+void GPS_PowerOnOff(bool power);
+void GPS_GetPowerState(void);
+void GPS_GetStatus(void);
 bool GPS_GetGPSInfo(float *GPSInfoArray);
 void GPS_GetField_char(const char* response, GPSField_t field, char** result);
 bool GPS_GetField_uint16(const char* response, GPSField_t field, uint16_t* result);

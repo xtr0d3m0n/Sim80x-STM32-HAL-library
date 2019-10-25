@@ -55,7 +55,7 @@ GsmVoiceStatus_t     Gsm_Dial(char *Number,uint8_t WaitForAnswer_second)
   {    
     if(Sim80x.Gsm.GsmVoiceStatus != GsmVoiceStatus_Calling)
       return Sim80x.Gsm.GsmVoiceStatus;
-    osDelay(100);
+    HAL_Delay(100);
     wait-=100;
   } 
   if(wait==0)
@@ -256,7 +256,7 @@ bool  Gsm_MsgSetServiceNumber(char *ServiceNumber)
 bool  Gsm_MsgGetTextModeParameter(void)
 {
   uint8_t answer;
-  answer = Sim80x_SendAtCommand("AT+CSMP?\r\n",500,1,"\r\nOK\r\n");
+  answer = Sim80x_SendAtCommand("AT+CSMP?\r\n",1000,1,"\r\nOK\r\n");
   if(answer == 1)
     return true;
   else
@@ -287,7 +287,7 @@ bool  Gsm_MsgSendText(char *Number,char *msg)
     Gsm_MsgSetFormat(GsmMsgFormat_Text);
   snprintf(str,sizeof(str),"AT+CMGS=\"%s\"\r\n",Number);
   answer = Sim80x_SendAtCommand(str,10000,1,"\r\r\n> ");
-  osDelay(100);
+  HAL_Delay(100);
   if(answer != 1)
   {
     snprintf(str,sizeof(str),"%c",27);
@@ -299,7 +299,7 @@ bool  Gsm_MsgSendText(char *Number,char *msg)
   Sim80x_SendString(str);
   while(Timeout>0)
   {
-    osDelay(1000);
+    HAL_Delay(1000);
     Timeout--;
     if(Sim80x.Gsm.MsgSent == 1)
       return true;

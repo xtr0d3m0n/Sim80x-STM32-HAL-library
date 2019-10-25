@@ -2,7 +2,6 @@
 #define	_SIM80XTYPES_H
 
 #include "usart.h"
-#include "Cmsis_OS.h"
 #include "Sim80xConfig.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -253,11 +252,13 @@ typedef struct
 //######################################################################################################################
 typedef enum
 {
+  Off = 0, 
   Fail = -1,
-  Off = 0,
-  NoFix = 1,
-  Fix = 2,
-  AccurateFix = 3, 
+  Err = -2,
+  On = 1,
+  NoFix = 2,
+  Fix = 3,
+  AccurateFix = 4, 
 }GPSStatus_t;
 //######################################################################################################################
 typedef enum
@@ -315,6 +316,10 @@ typedef struct
 	//
   #if (_SIM80X_USE_GPRS==1)
   GPRS_t                GPRS;
+  #endif
+  //
+  #if (_SIM80X_USE_GPS==1)
+  GPSStatus_t           GPS;
   #endif
   
 }Sim80x_t;

@@ -1,12 +1,12 @@
 #include "Sim80x.h"
 
-size_t readNext(char * buffer, size_t size, uint16_t * timeout, char stop)
+/*size_t readNext(char * buffer, size_t size, uint16_t * timeout, char stop)
 {
 	size_t i = 0;
 	bool exit = false;
 
 	do {
-		while(!exit && i < size - 1/*available()*/) {
+		while(!exit && i < size - 1//available()) {
 			char c = replyBuffer[i];//read();
 			buffer[i] = c;
 			i++;
@@ -27,8 +27,8 @@ size_t readNext(char * buffer, size_t size, uint16_t * timeout, char stop)
 	buffer[i] = '\0';
 
 	return i > 0 ? i - 1 : i;
-}
-
+}*/
+/*
 size_t copyCurrentLine(char *dst, size_t dstSize, uint16_t shift)
 {
 	char *p = dst;
@@ -44,9 +44,9 @@ size_t copyCurrentLine(char *dst, size_t dstSize, uint16_t shift)
 	*p = '\0';
 
 	return strlen(dst);
-}
+}*/
 
-size_t safeCopy(const char *src, char *dst, size_t dstSize)
+/*size_t safeCopy(const char *src, char *dst, size_t dstSize)
 {
 	size_t len = strlen(src);
 	if (dst != NULL) {
@@ -55,7 +55,7 @@ size_t safeCopy(const char *src, char *dst, size_t dstSize)
 	}
 
 	return len;
-}
+}*/
 
 char* find(const char* str, char divider, uint8_t index)
 {
