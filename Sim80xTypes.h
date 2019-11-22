@@ -1,7 +1,6 @@
 #ifndef	_SIM80XTYPES_H
 #define	_SIM80XTYPES_H
 
-#include "usart.h"
 #include "Sim80xConfig.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -250,15 +249,19 @@ typedef struct
   
 }GPRS_t;
 //######################################################################################################################
-typedef enum
+/*#if (_SIM80X_USE_GPS == 1)
+typedef struct
 {
-  Off = 0, 
-  Fail = -1,
-  Err = -2,
-  On = 1,
-  NoFix = 2,
-  Fix = 3,
-  AccurateFix = 4, 
+  uint8_t Off:1; 
+  uint8_t Fail:1;
+  uint8_t Err:1;
+  uint8_t On:1;
+  uint8_t NoFix:1;
+  uint8_t Fix:1;
+  uint8_t AccurateFix:1;
+  uint8_t ColdReset:1;   
+  uint8_t HotReset:1;
+  uint8_t WarmReset:1;   
 }GPSStatus_t;
 //######################################################################################################################
 typedef enum
@@ -272,6 +275,31 @@ typedef enum
   Speed = 7,
   Course = 8, 
 }GPSField_t;
+#endif*/
+//######################################################################################################################
+#if (_SIM80X_USE_GNSS == 1)
+typedef struct
+{ 
+  uint8_t Fail:1;
+  uint8_t Err:1;
+  uint8_t PwrSts:1;
+  uint8_t Fix:1;
+  uint8_t RunSts:1;   
+}GNSS_t;
+//######################################################################################################################
+typedef enum
+{
+  Run = 0,
+  Fix = 1,
+  UTC = 2,
+  Latitude = 3,
+  Longitude = 4,
+  Altitude = 5,
+  Speed = 6,
+  Course = 7,
+  GNSSSatsInView = 16, 
+}GNSSField_t;
+#endif
 //######################################################################################################################
 typedef struct
 {
@@ -320,6 +348,10 @@ typedef struct
   //
   #if (_SIM80X_USE_GPS==1)
   GPSStatus_t           GPS;
+  #endif
+  //
+  #if (_SIM80X_USE_GNSS==1)
+  GNSS_t           GNSS;
   #endif
   
 }Sim80x_t;

@@ -60,13 +60,18 @@ size_t copyCurrentLine(char *dst, size_t dstSize, uint16_t shift)
 char* find(const char* str, char divider, uint8_t index)
 {
 	char* p = strchr(str, ':');
-	if (p == NULL) p = strchr(str, str[0]); //ditching eventual response header
-
+	if (p == NULL) 
+	{
+	p = strchr(str, str[0]); //ditching eventual response header
+	}
 	p++;
 	for (uint8_t i = 0; i < index; i++)
 	{
 		p = strchr(p, divider);
-		if (p == NULL) return NULL;
+		if (p == NULL) 
+		{
+			return NULL;
+		}
 		p++;
 	}
 
@@ -128,6 +133,16 @@ bool parse_int16(const char* str, char divider, uint8_t index, int16_t* result)
 }
 
 bool parse_float(const char* str, char divider, uint8_t index, float* result)
+{
+	char* p = find(str, divider, index);
+	if (p == NULL) return false;
+
+	errno = 0;
+	*result = strtod(p, NULL);
+
+	return errno == 0;
+}
+bool parse_double(const char* str, char divider, uint8_t index, double* result)
 {
 	char* p = find(str, divider, index);
 	if (p == NULL) return false;

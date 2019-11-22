@@ -9,13 +9,15 @@ Sim80x_t      Sim80x;
 //######################################################################################################################
 void	Sim80x_SendString(char *str)
 {
+  Sim80x.UsartRxIndex = 0;
+  memset(Sim80x.UsartRxBuffer,0,_SIM80X_BUFFER_SIZE);
   HAL_UART_Receive_IT(&_SIM80X_USART,&Sim80x.UsartRxTemp,1);	
   #if (_SIM80X_DMA_TRANSMIT==1)
 	while(_SIM80X_USART.hdmatx->State != HAL_DMA_STATE_READY)
-		osDelay(10);
+		HAL_Delay(10);
 	HAL_UART_Transmit_DMA(&_SIM80X_USART,(uint8_t*)str,strlen(str));
 	while(_SIM80X_USART.hdmatx->State != HAL_DMA_STATE_READY)
-		osDelay(10);
+		HAL_Delay(10);
   #else
  	HAL_UART_Transmit(&_SIM80X_USART,(uint8_t*)str,strlen(str),100);
   HAL_Delay(10);
@@ -24,13 +26,15 @@ void	Sim80x_SendString(char *str)
 //######################################################################################################################
 void  Sim80x_SendRaw(uint8_t *Data,uint16_t len)
 {
+  Sim80x.UsartRxIndex = 0;
+  memset(Sim80x.UsartRxBuffer,0,_SIM80X_BUFFER_SIZE);
   HAL_UART_Receive_IT(&_SIM80X_USART,&Sim80x.UsartRxTemp,1);	
   #if (_SIM80X_DMA_TRANSMIT==1) 
 	while(_SIM80X_USART.hdmatx->State != HAL_DMA_STATE_READY)  
-		osDelay(10);
+		HAL_Delay(10);
 	HAL_UART_Transmit_DMA(&_SIM80X_USART,Data,len);
 	while(_SIM80X_USART.hdmatx->State != HAL_DMA_STATE_READY)
-		osDelay(10);
+		HAL_Delay(10);
   #else
 	HAL_UART_Transmit(&_SIM80X_USART,Data,len,100);
   HAL_Delay(10);
@@ -48,6 +52,7 @@ void  Sim80x_RxCallBack(void)
       Sim80x.UsartRxIndex++;
   }
   else if(Sim80x.Status.DataTransferMode==1)
+    
   {
     Sim80x.UsartRxLastTime = HAL_GetTick();
     Sim80x.UsartRxBuffer[Sim80x.UsartRxIndex] = Sim80x.UsartRxTemp;
@@ -59,18 +64,14 @@ void  Sim80x_RxCallBack(void)
 //######################################################################################################################
 uint8_t   Sim80x_SendAtCommand(char *OutAtCommand,int32_t  MaxWaiting_ms,uint8_t HowMuchAnswers,...)
 {
-  /*while(Sim80x.Status.Busy == 1)
-  {
-    osDelay(100);
-  }*/
-
   Sim80x.Status.Busy = 1;
   Sim80x.AtCommand.FindAnswer = 0;
   Sim80x.AtCommand.ReceiveAnswerExeTime=0;
   Sim80x.AtCommand.SendCommandStartTime = HAL_GetTick();
   Sim80x.AtCommand.ReceiveAnswerMaxWaiting = MaxWaiting_ms;
   memset(Sim80x.AtCommand.ReceiveAnswer,0,sizeof(Sim80x.AtCommand.ReceiveAnswer));
-
+  Sim80x.UsartRxIndex = 0;
+  memset(Sim80x.UsartRxBuffer,0,_SIM80X_BUFFER_SIZE);
   va_list tag;
 	va_start (tag,HowMuchAnswers);
 	char *arg[HowMuchAnswers];
@@ -80,26 +81,19 @@ uint8_t   Sim80x_SendAtCommand(char *OutAtCommand,int32_t  MaxWaiting_ms,uint8_t
     strncpy(Sim80x.AtCommand.ReceiveAnswer[i],arg[i],sizeof(Sim80x.AtCommand.ReceiveAnswer[0]));
   }
   va_end (tag);
-	  
   strncpy(Sim80x.AtCommand.SendCommand,OutAtCommand,sizeof(Sim80x.AtCommand.SendCommand));
+  
   Sim80x_SendString(Sim80x.AtCommand.SendCommand);
-  
-  if( ((Sim80x.UsartRxIndex>4) && (HAL_GetTick()-Sim80x.UsartRxLastTime > 50)))
-    {
-      Sim80x.BufferStartTime = HAL_GetTick();      
-      Sim80x_BufferProcess();      
-      Sim80x.BufferExeTime = HAL_GetTick()-Sim80x.BufferStartTime;
-    }
-  
   while( MaxWaiting_ms > 0) 
   {
+    Sim80x_BufferProcess();
     HAL_Delay(10);
     if(Sim80x.AtCommand.FindAnswer > 0)
       return Sim80x.AtCommand.FindAnswer;    
     MaxWaiting_ms-=10;
   }
-  memset(Sim80x.AtCommand.ReceiveAnswer,0,sizeof(Sim80x.AtCommand.ReceiveAnswer));
-  Sim80x.Status.Busy=0;
+  //memset(Sim80x.AtCommand.ReceiveAnswer,0,sizeof(Sim80x.AtCommand.ReceiveAnswer));
+  Sim80x.Status.Busy = 0;
   return Sim80x.AtCommand.FindAnswer;
 }
 
@@ -121,7 +115,7 @@ void  Sim80x_InitValue(void)
   Gsm_MsgGetFormat();
   if(Sim80x.Gsm.MsgFormat != GsmMsgFormat_Text)
     Gsm_MsgSetFormat(GsmMsgFormat_Text);
-  Gsm_MsgGetServiceNumber();
+  //Gsm_MsgGetServiceNumber();
   Gsm_MsgGetTextModeParameter();
   Sim80x_GetIMEI(NULL);
   Sim80x_GetLoadVol();
@@ -145,8 +139,8 @@ void   Sim80x_SaveParameters(void)
 //######################################################################################################################
 void  Sim80x_SetPower(bool TurnOn)
 { 
-  if(TurnOn==true)
-  {  
+  if(TurnOn == true)
+  {  	
     if(Sim80x_SendAtCommand("AT\r\n",1000,1,"AT\r\r\nOK\r\n") == 1)
     {
       HAL_Delay(100);
@@ -154,14 +148,14 @@ void  Sim80x_SetPower(bool TurnOn)
       printf("\r\nSim80x_SetPower(ON) ---> OK\r\n");
       #endif
       Sim80x.Status.Power=1;
-      //Sim80x_InitValue();
+      Sim80x_InitValue();
     }
     else
-    {     
-      /*HAL_GPIO_WritePin(_SIM80X_POWER_KEY_GPIO,_SIM80X_POWER_KEY_PIN,GPIO_PIN_RESET);
-      HAL_Delay(1200);
+    {  
       HAL_GPIO_WritePin(_SIM80X_POWER_KEY_GPIO,_SIM80X_POWER_KEY_PIN,GPIO_PIN_SET);
-      HAL_Delay(3000);  
+      HAL_Delay(2000);
+      HAL_GPIO_WritePin(_SIM80X_POWER_KEY_GPIO,_SIM80X_POWER_KEY_PIN,GPIO_PIN_RESET);
+      HAL_Delay(3000);
       if(Sim80x_SendAtCommand("AT\r\n",1000,1,"AT\r\r\nOK\r\n") == 1)
       {
         HAL_Delay(10000);
@@ -169,13 +163,15 @@ void  Sim80x_SetPower(bool TurnOn)
         printf("\r\nSim80x_SetPower(ON) ---> OK\r\n");
         #endif
         Sim80x.Status.Power=1;
-        //Sim80x_InitValue();   
+        Sim80x_InitValue();   
       }
       else
-        Sim80x.Status.Power=0;*/
+      {
+        Sim80x.Status.Power=0;
+      }
     }
   }
-  else
+  else if(TurnOn == false)
   {
     if(Sim80x_SendAtCommand("AT\r\n",1000,1,"AT\r\r\nOK\r\n") == 1)
     {
@@ -184,15 +180,15 @@ void  Sim80x_SetPower(bool TurnOn)
       #endif
       Sim80x.Status.Power=0;
       #if (_SIM80X_USE_POWER_KEY==1) 
-      HAL_GPIO_WritePin(_SIM80X_POWER_KEY_GPIO,_SIM80X_POWER_KEY_PIN,GPIO_PIN_RESET);
-      HAL_Delay(1200);
       HAL_GPIO_WritePin(_SIM80X_POWER_KEY_GPIO,_SIM80X_POWER_KEY_PIN,GPIO_PIN_SET);
+      HAL_Delay(1200);
+      HAL_GPIO_WritePin(_SIM80X_POWER_KEY_GPIO,_SIM80X_POWER_KEY_PIN,GPIO_PIN_RESET);
       #endif
       #if (_SIM80X_USE_POWER_KEY==0)
       Sim80x_SendAtCommand("AT+CPOWD=1\r\n",2000,1,"\r\nOK\r\n"); 
       #endif      
     }
-  }  
+  }
 }
 //######################################################################################################################
 void Sim80x_SetFactoryDefault(void)
@@ -579,46 +575,41 @@ bool  Sim80x_SetEchoParameters(uint8_t  SelectMic_0_or_1,uint16_t NonlinearProce
 //######################################################################################################################
 void	Sim80x_Init()
 {
-  #if (_SIM80X_USE_POWER_KEY==1)  
+  /*#if (_SIM80X_USE_POWER_KEY==1)  
   HAL_GPIO_WritePin(_SIM80X_POWER_KEY_GPIO,_SIM80X_POWER_KEY_PIN,GPIO_PIN_SET);
+  HAL_Delay(1200);
+  HAL_GPIO_WritePin(_SIM80X_POWER_KEY_GPIO,_SIM80X_POWER_KEY_PIN,GPIO_PIN_RESET);
+	HAL_Delay(3000);
   #else
   HAL_Delay(1000);
-  #endif
+  #endif*/
 	memset(&Sim80x,0,sizeof(Sim80x));
 	memset(Sim80x.UsartRxBuffer,0,_SIM80X_BUFFER_SIZE);
 	HAL_UART_Receive_IT(&_SIM80X_USART,&Sim80x.UsartRxTemp,1);
-  /*osThreadDef(Sim80xTask, StartSim80xTask, Priority, 0, 256);
-  Sim80xTaskHandle = osThreadCreate(osThread(Sim80xTask), NULL);
-  osThreadDef(Sim80xBuffTask, StartSim80xBuffTask, Priority, 0, 256);
-  Sim80xBuffTaskHandle = osThreadCreate(osThread(Sim80xBuffTask), NULL);*/
   //StartSim80xTask();
 
-  /*for(uint8_t i=0 ;i<5 ;i++)  
+  /*for(uint8_t i=0 ;i<1 ;i++)  
   {
     if(Sim80x_SendAtCommand("AT\r\n",1000,1,"AT\r\r\nOK\r\n") == 1)   
-    {  
+    {
       break;
     }
+    HAL_Delay(200);
   }*/
-	HAL_Delay(5000);
   Sim80x_SetPower(true);
-	HAL_Delay(5000);
-  #if (_SIM80X_USE_GPS==1) 
-  GPS_PowerOnOff(true);
-  #endif
 }
 //######################################################################################################################
 void  Sim80x_BufferProcess()
 {
   char      *strStart,*str1,*str2;//*str3;
   int32_t   tmp_int32_t;
-  //char      tmp_str[16];
+  char      tmp_str[16];
   
-  strStart = (char*)&Sim80x.UsartRxBuffer[0];  
+  strStart = (char*)Sim80x.UsartRxBuffer;  
   //##################################################
   //+++       Buffer Process
   //##################################################
-  /*str1 = strstr(strStart,"\r\n+CREG:");
+  str1 = strstr(strStart,"\r\n+CREG:");
   if(str1!=NULL)
   {
     str1 = strchr(str1,',');
@@ -1236,7 +1227,7 @@ void  Sim80x_BufferProcess()
   #endif  
   //##################################################  
   //##################################################  
-  //##################################################  */
+  //##################################################
   for( uint8_t parameter=0; parameter<11; parameter++)
   {
     if((parameter==10) || (Sim80x.AtCommand.ReceiveAnswer[parameter][0]==0))
@@ -1258,9 +1249,9 @@ void  Sim80x_BufferProcess()
   #if (_SIM80X_DEBUG==2)
   printf("%s",strStart);
   #endif
-  Sim80x.UsartRxIndex=0;
+  /*Sim80x.UsartRxIndex=0;
   memset(Sim80x.UsartRxBuffer,0,_SIM80X_BUFFER_SIZE);    
-  Sim80x.Status.Busy=0;
+  Sim80x.Status.Busy=0;*/
 }
 
 //######################################################################################################################

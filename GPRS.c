@@ -1,8 +1,44 @@
 #include "Sim80x.h"
 #if (_SIM80X_USE_GPRS==1)
-
-
 //####################################################################################################
+bool  GPRS_Attach()
+{
+  uint8_t answer;
+  answer = Sim80x_SendAtCommand("AT+CGATT=1\r\n",85000,2,"\r\nOK\r\n","\r\n+CME ERROR\r\n");
+  if(answer == 1)
+  {
+    #if (_SIM80X_DEBUG==1)
+    printf("\r\nGPRS_Attach() ---> OK\r\n");
+    #endif
+    return true;
+  }
+  else  
+  {
+    #if (_SIM80X_DEBUG==1)
+    printf("\r\nGPRS_Attach() --->ERROR\r\n");
+    #endif
+    return false;
+  }
+}
+bool  GPRS_DeAttach()
+{
+  uint8_t answer;
+  answer = Sim80x_SendAtCommand("AT+CGATT=0\r\n",85000,2,"\r\nOK\r\n","\r\n+CME ERROR\r\n");
+  if(answer == 1)
+  {
+    #if (_SIM80X_DEBUG==1)
+    printf("\r\nGPRS_DeAttach() ---> OK\r\n");
+    #endif
+    return true;
+  }
+  else  
+  {
+    #if (_SIM80X_DEBUG==1)
+    printf("\r\nGPRS_DeAttach() --->ERROR\r\n");
+    #endif
+    return false;
+  }
+}   
 bool  GPRS_StartUpGPRS(void)
 {
   uint8_t answer;
@@ -150,8 +186,14 @@ bool  GPRS_SetMultiConnection(bool Enable)
 //####################################################################################################
 bool  GPRS_ConnectToNetwork(char *Name,char *username,char *password,bool EnableMultiConnection)
 {
-  
   if(GPRS_DeactivatePDPContext()==false)
+  {
+    #if (_SIM80X_DEBUG==1)
+    printf("\r\nGPRS_ConnectToNetwork() ---> ERROR\r\n");
+    #endif 
+    return false;
+  }
+  if(GPRS_Attach()==false)
   {
     #if (_SIM80X_DEBUG==1)
     printf("\r\nGPRS_ConnectToNetwork() ---> ERROR\r\n");
@@ -187,30 +229,47 @@ bool  GPRS_HttpGet(char *URL)
   char str[100];
   answer = Sim80x_SendAtCommand("AT+SAPBR=3,1,\"Contype\",\"GPRS\"\r\n",1000,1,"\r\nOK\r\n");
   if(answer!=1)
-    goto Error;
+  goto Error;
+
   answer = Sim80x_SendAtCommand("AT+SAPBR=1,1\r\n",10000,1,"\r\nOK\r\n");
   if(answer!=1)
-    goto Error;
+  goto Error;
+
   answer = Sim80x_SendAtCommand("AT+HTTPINIT\r\n",1000,1,"\r\nOK\r\n");
   if(answer!=1)
-    goto Error;
+  goto Error;
+ 
   answer = Sim80x_SendAtCommand("AT+HTTPPARA=\"CID\",1\r\n",1000,1,"\r\nOK\r\n");
   if(answer!=1)
-    goto Error;
+  goto Error;
   
-  snprintf(str,sizeof(str),"AT+HTTPPARA=\"URL\",\"%s\"\r\n",URL);
-  answer = Sim80x_SendAtCommand(str,10000,2,"\r\nOK\r\n","\r\n+CME ERROR");
+  //snprintf(str,sizeof(str),"AT+HTTPPARA=\"URL\",\"%s\"\r\n",URL);
+  answer = Sim80x_SendAtCommand("AT+HTTPPARA=\"URL\",\"http://63.209.35.82/hook/?lon=79.8&lat=6.8\"\r\n",10000,2,"\r\nOK\r\n","\r\n+CME ERROR");
   if(answer!=1)
-    goto Error;
-  
+  goto Error;
+    
   Sim80x.GPRS.HttpAction.ResultCode=0;
   answer = Sim80x_SendAtCommand("AT+HTTPACTION=0\r\n",1000,1,"\r\nOK\r\n");
   if(answer!=1)
-    goto Error;
-  timeout=0;
+  goto Error;
+  
+  answer = Sim80x_SendAtCommand("AT+HTTPTERM\r\n",1000,1,"\r\nOK\r\n");
+  if(answer!=1)
+  goto Error;
+
+  answer = Sim80x_SendAtCommand("AT+SAPBR=0,1\r\n",1000,1,"\r\nOK\r\n");
+  if(answer!=1)
+  goto Error;
+
+else
+{
+  return true;
+}
+
+  /*timeout=0;
   while(Sim80x.GPRS.HttpAction.ResultCode==0)
   {
-    osDelay(1000); 
+    HAL_Delay(1000); 
     timeout++;  
     if(timeout == 120)
       goto Error;    
@@ -226,7 +285,7 @@ bool  GPRS_HttpGet(char *URL)
       timeout=0;
       while(Sim80x.GPRS.HttpAction.CopyToBuffer==0)
       {
-        osDelay(10);
+        HAL_Delay(10);
         timeout++;
         if(timeout == 100)
           goto Error;
@@ -247,7 +306,79 @@ bool  GPRS_HttpGet(char *URL)
   #if (_SIM80X_DEBUG==1)
   printf("\r\GPRS_HttpGet(%s) ---> ERROR\r\n",URL);
   #endif 
+  return false;*/
+  Error:
+  answer = Sim80x_SendAtCommand("AT+HTTPTERM\r\n",1000,1,"\r\nOK\r\n");
+  answer = Sim80x_SendAtCommand("AT+SAPBR=0,1\r\n",1000,1,"\r\nOK\r\n");
+  #if (_SIM80X_DEBUG==1)
+  printf("\r\GPRS_HttpGet(%s) ---> ERROR\r\n",URL);
+  #endif 
   return false;  
 }
 //####################################################################################################
+bool  GPRS_HttpPost(char *URL,char *data,size_t size,uint16_t timeout)
+{
+  uint8_t answer;
+  char str[100];
+  answer = Sim80x_SendAtCommand("AT+SAPBR=3,1,\"Contype\",\"GPRS\"\r\n",1000,1,"\r\nOK\r\n");
+  if(answer!=1)
+  {  
+    goto Error;
+  }
+  answer = Sim80x_SendAtCommand("AT+SAPBR=1,1\r\n",10000,1,"\r\nOK\r\n");
+  if(answer!=1)
+  {
+    goto Error;
+  }
+  answer = Sim80x_SendAtCommand("AT+HTTPINIT\r\n",1000,1,"\r\nOK\r\n");
+  if(answer!=1)
+  {
+    goto Error;
+  }
+  answer = Sim80x_SendAtCommand("AT+HTTPPARA=\"CID\",1\r\n",1000,1,"\r\nOK\r\n");
+  if(answer!=1)
+  {
+    goto Error;
+  }
+  sprintf(str,"AT+HTTPPARA=\"URL\",\"%s\"\r\n",URL);
+  answer = Sim80x_SendAtCommand(str,10000,2,"\r\r\nOK\r\n","\r\n+CME ERROR");
+  if(answer!=1)
+  {
+    goto Error;
+  }    	
+  sprintf(str,"AT+HTTPDATA=%d,%d\r\n",size,timeout);
+  answer = Sim80x_SendAtCommand(str,1000,1,"\r\r\nDOWNLOAD\r\n");
+  if(answer!=1)
+  {
+    goto Error;
+  }
+  answer = Sim80x_SendAtCommand(data,timeout,1,"\r\nOK\r\n");
+  if(answer!=1)
+  {
+    goto Error;
+  }
+  //Sim80x.GPRS.HttpAction.ResultCode=0;
+  answer = Sim80x_SendAtCommand("AT+HTTPACTION=1\r\n",2000,1,"\r\nOK\r\n");
+  if(answer!=1)
+  {
+    goto Error;
+  }
+  answer = Sim80x_SendAtCommand("AT+HTTPTERM\r\n",1000,1,"\r\nOK\r\n");
+  if(answer!=1)
+  {
+    goto Error;
+  }
+  answer = Sim80x_SendAtCommand("AT+SAPBR=0,1\r\n",1000,1,"\r\nOK\r\n");
+  if(answer == 1)
+  {
+    return true;
+  }
+  Error:
+  answer = Sim80x_SendAtCommand("AT+HTTPTERM\r\n",1000,1,"\r\nOK\r\n");
+  answer = Sim80x_SendAtCommand("AT+SAPBR=0,1\r\n",1000,1,"\r\nOK\r\n");
+  #if (_SIM80X_DEBUG==1)
+  printf("\r\GPRS_HttpGet(%s) ---> ERROR\r\n",URL);
+  #endif
+	return false;	
+}
 #endif

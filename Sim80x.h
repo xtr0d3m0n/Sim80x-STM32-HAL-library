@@ -15,10 +15,13 @@
 //######################################################################################################################
 extern Sim80x_t         Sim80x;
 #define min(X, Y) (((X) > (Y)) ? (X) : (Y));
+#define GPS_COLD_RESET 0
+#define GPS_HOT_RESET 1
+#define GPS_WARM_RESET 2
 //######################################################################################################################
 //######################################################################################################################
 //######################################################################################################################
-void	                  Sim80x_SendString(char *str);
+void					Sim80x_SendString(char *str);
 void                    Sim80x_SendRaw(uint8_t *Data,uint16_t len);
 uint8_t                 Sim80x_SendAtCommand(char *AtCommand,int32_t  MaxWaiting_ms,uint8_t HowMuchAnswers,...);
 //######################################################################################################################
@@ -103,27 +106,38 @@ bool                    GPRS_SetMultiConnection(bool Enable);
 void                    GPRS_UserHttpGetAnswer(char *data,uint32_t StartAddress,uint16_t dataLen);
 bool                    GPRS_ConnectToNetwork(char *Name,char *username,char *password,bool EnableMultiConnection);
 bool                    GPRS_HttpGet(char *URL);
-
+bool 					GPRS_HttpPost(char *URL,char *data,size_t size,uint16_t timeout);
 //######################################################################################################################
-void GPS_PowerOnOff(bool power);
-void GPS_GetPowerState(void);
-void GPS_GetStatus(void);
-bool GPS_GetGPSInfo(float *GPSInfoArray);
-void GPS_GetField_char(const char* response, GPSField_t field, char** result);
-bool GPS_GetField_uint16(const char* response, GPSField_t field, uint16_t* result);
-bool GPS_GetField_float(const char* response, GPSField_t field, float* result);
+/*void					GPS_PowerOnOff(bool power);
+void 					GPS_GetPowerState(void);
+void 					GPS_GetStatus(void);
+void 					GPS_Reset(uint8_t resetmode);
+bool 					GPS_GetGPSInfo(float *float_data,uint16_t *uint16_t_data);
+void 					GPS_GetField_char(const char* response, GPSField_t field, char** result);
+bool 					GPS_GetField_uint16(const char* response, GPSField_t field, uint16_t* result);
+bool 					GPS_GetField_float(const char* response, GPSField_t field, float* result);*/
 //######################################################################################################################
-size_t readNext(char * buffer, size_t size, uint16_t * timeout, char stop);
-size_t copyCurrentLine(char *dst, size_t dstSize, uint16_t shift);
-size_t safeCopy(const char *src, char *dst, size_t dstSize);
-char* find(const char* str, char divider, uint8_t index);
-bool parse_uint8(const char* str, char divider, uint8_t index, uint8_t* result);
-bool parse_int8(const char* str, char divider, uint8_t index, int8_t* result);
-bool parse_uint16(const char* str, char divider, uint8_t index, uint16_t* result);
+void					GNSS_PowerOnOff(bool power);
+void 					GNSS_GetPowerState(void);
+void 					GNSS_GetStatus(void);
+bool 					GNSS_GetInfo(double *double_data,uint16_t *uint16_t_data);
+void 					GNSS_GetField_char(const char* response, GNSSField_t field, char** result);
+bool 					GNSS_GetField_uint16(const char* response, GNSSField_t field, uint16_t* result);
+bool 					GNSS_GetField_float(const char* response, GNSSField_t field, float* result);
+bool  					GNSS_GetField_double(const char* response, GNSSField_t field, double* result);
+//######################################################################################################################
+size_t 					readNext(char * buffer, size_t size, uint16_t * timeout, char stop);
+size_t 					copyCurrentLine(char *dst, size_t dstSize, uint16_t shift);
+size_t 					safeCopy(const char *src, char *dst, size_t dstSize);
+char* 					find(const char* str, char divider, uint8_t index);
+bool 					parse_uint8(const char* str, char divider, uint8_t index, uint8_t* result);
+bool 					parse_int8(const char* str, char divider, uint8_t index, int8_t* result);
+bool 					parse_uint16(const char* str, char divider, uint8_t index, uint16_t* result);
 #if defined(NEED_SIZE_T_OVERLOADS)
-bool parse_size(const char* str, char divider, uint8_t index, size_t* result);
+bool 					parse_size(const char* str, char divider, uint8_t index, size_t* result);
 #endif
-bool parse_int16(const char* str, char divider, uint8_t index, int16_t* result);
-bool parse_float(const char* str, char divider, uint8_t index, float* result);
+bool 					parse_int16(const char* str, char divider, uint8_t index, int16_t* result);
+bool 					parse_float(const char* str, char divider, uint8_t index, float* result);
+bool 					parse_double(const char* str, char divider, uint8_t index, double* result);
 //######################################################################################################################
 #endif

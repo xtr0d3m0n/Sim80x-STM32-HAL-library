@@ -12,11 +12,12 @@
 
 #define	_SIM80X_BUFFER_SIZE			    512
 
-#define _SIM80X_DMA_TRANSMIT        0
+#define _SIM80X_DMA_TRANSMIT        1
 
 #define _SIM80X_USE_BLUETOOTH       0
-#define _SIM80X_USE_GPRS            0
-#define _SIM80X_USE_GPS            	1
+#define _SIM80X_USE_GPRS            1
+//#define _SIM80X_USE_GPS            	1 not usable in V2 SIM808!!!!!!!
+#define _SIM80X_USE_GNSS			1
 
 
 #define	_SIM80X_POWER_KEY_GPIO		  SIM_POWER_KEY_GPIO_Port
